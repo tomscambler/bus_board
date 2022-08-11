@@ -5,12 +5,10 @@ function getBusStopIdFromUser(myMessageToUser){
     console.log(myMessageToUser);
     
     let busId = readline.prompt(myMessageToUser);
-    //number = parseInt(number);
 
-    while( !busId.match(/^[0-9]{9}[a-z]/gi) ){
+    while( !busId.match(/^[0-9]{9}[a-z]$/gi) ){
         console.log("ERROR: That is not a valid bus stop!")
         busId = readline.prompt(myMessageToUser);
-        //number = parseInt(number);
     }
 
     return busId;
