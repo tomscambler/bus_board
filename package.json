@@ -1,0 +1,17 @@
+{
+  "name": "bus_board",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bus_board.js",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tomscambler/bus_board.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tomscambler/bus_board/issues"
+  },
+  "homepage": "https://github.com/tomscambler/bus_board#readme"
+}
