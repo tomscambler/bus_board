@@ -9,7 +9,7 @@ import readline from "readline-sync";
 //     console.log(myMessageToUser);
     
 //     let myInput = readline.prompt(myMessageToUser);
-//     myInput = "490004486k";
+//     //myInput = "490004486k";
 
 //     while( !isValidBusId(myInput) ){
 //         console.log("ERROR: That is not valid!")
@@ -81,9 +81,9 @@ let myLon = postcodeInfo.result.longitude
 
 let myBusStopId = await findTwoNearestBusStops(myLat, myLon);
 
-//console.log(myBusStopId)
-
 for (let i = 0; i < 2; i++){
+    
+    console.log(myBusStopId.stopPoints[i].naptanId);
 
     const arrivals = await fetch(`https://api.tfl.gov.uk/StopPoint/${myBusStopId.stopPoints[i].naptanId}/Arrivals`)
     .then(response => response.json());
@@ -106,5 +106,28 @@ for (let i = 0; i < 2; i++){
             console.log(`Your next bus from ${myStop} is the ${myRoute} to ${myDestination}, arriving in ${secondsToMinutesAndSeconds(myArrivalTime)}`);
         }
     }
+    console.log("Do you need directions to this bus stop?");
+    
+    let myInput = readline.prompt().toUpperCase();
+
+    while( myInput!="Y" && myInput!="N" ){
+        console.log("ERROR: That is not valid!")
+        myInput = readline.prompt("Do you need directions to this bus stop?");
+    }
+
+    if (myInput=="Y"){
+
+        const directions = await fetch(`https://api.tfl.gov.uk/Journey/JourneyResults/${myPostCode}/to/${myBusStopId.stopPoints[i].naptanId}`)
+        .then(response => response.json());
+
+        for (let k=0; k<directions.journeys[0].legs[0].instruction.steps.length; k++){
+            console.log(`${directions.journeys[0].legs[0].instruction.steps[k].descriptionHeading}${directions.journeys[0].legs[0].instruction.steps[k].description}`);
+        }
+
+
+    }
+
 }
 
+
+//directions.journeys[0].legs[0].instruction.steps[i].descriptionHeading and description
