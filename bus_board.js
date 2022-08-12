@@ -32,8 +32,6 @@ const arrivals = await fetch(`https://api.tfl.gov.uk/StopPoint/${myBusStopId}/Ar
 .then(response => response.json())
 .then(body => body.slice(0,5));
 
-console.log(arrivals);
-
 for( let i=0; i<5; i++ ){
         
     let myDestination = arrivals[i].destinationName;
