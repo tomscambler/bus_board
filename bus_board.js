@@ -22,13 +22,17 @@ function isValidPostCode(myInput){
     return myInput.match(/^(([A-Z][0-9]{1,2})|(([A-Z][A-HJ-Y][0-9]{1,2})|(([A-Z][0-9][A-Z])|([A-Z][A-HJ-Y][0-9]?[A-Z]))))\s*[0-9][A-Z]{2}$/gi);
 }
 
-function getInputFromUser(myMessageToUser){
+function isYorN(myInput){
+    return myInput.match(/[YN]{1}/gi);
+}
+
+function getInputFromUser(myMessageToUser, myValidationFunction){
 
     console.log(myMessageToUser);
     
     let myInput = readline.prompt(myMessageToUser);
 
-    while( !isValidPostCode(myInput) ){
+    while( !myValidationFunction(myInput) ){
         console.log("ERROR: That is not valid!")
         myInput = readline.prompt(myMessageToUser);
     }
@@ -66,7 +70,7 @@ async function findTwoNearestBusStops(myLat, myLon){
 }
 
 
-let myPostCode = getInputFromUser("Enter a postcode");
+let myPostCode = getInputFromUser("Enter a postcode", isValidPostCode);
 
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
@@ -96,7 +100,7 @@ for (let i = 0; i < 2; i++){
     else{
         arrivals.sort(function(a, b){return a.timeToStation - b.timeToStation});
 
-        for(let j=0; j<5; j++ ){
+        for( let j=0; j<5; j++ ){
                 
             let myDestination = arrivals[j].destinationName;
             let myArrivalTime = arrivals[j].timeToStation;
@@ -106,14 +110,8 @@ for (let i = 0; i < 2; i++){
             console.log(`Your next bus from ${myStop} is the ${myRoute} to ${myDestination}, arriving in ${secondsToMinutesAndSeconds(myArrivalTime)}`);
         }
     }
-    console.log("Do you need directions to this bus stop?");
     
-    let myInput = readline.prompt().toUpperCase();
-
-    while( myInput!="Y" && myInput!="N" ){
-        console.log("ERROR: That is not valid!")
-        myInput = readline.prompt("Do you need directions to this bus stop?");
-    }
+    let myInput = getInputFromUser("Do you need directions to this bus stop?", isYorN);
 
     if (myInput=="Y"){
 
@@ -123,11 +121,5 @@ for (let i = 0; i < 2; i++){
         for (let k=0; k<directions.journeys[0].legs[0].instruction.steps.length; k++){
             console.log(`${directions.journeys[0].legs[0].instruction.steps[k].descriptionHeading}${directions.journeys[0].legs[0].instruction.steps[k].description}`);
         }
-
-
     }
-
 }
-
-
-//directions.journeys[0].legs[0].instruction.steps[i].descriptionHeading and description
