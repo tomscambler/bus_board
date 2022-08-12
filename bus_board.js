@@ -1,22 +1,5 @@
 import readline from "readline-sync";
-
-// function isValidBusId(myInput){
-//     return myInput.match(/^[0-9]{9}[a-z]$/gi);
-// }
-
-// function getInputFromUser(myMessageToUser){
-
-//     console.log(myMessageToUser);
-    
-//     let myInput = readline.prompt(myMessageToUser);
-//     //myInput = "490004486k";
-
-//     while( !isValidBusId(myInput) ){
-//         console.log("ERROR: That is not valid!")
-//         myInput = readline.prompt(myMessageToUser);
-//     }
-//     return myInput;
-// }
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 function isValidPostCode(myInput){
     return myInput.match(/^(([A-Z][0-9]{1,2})|(([A-Z][A-HJ-Y][0-9]{1,2})|(([A-Z][0-9][A-Z])|([A-Z][A-HJ-Y][0-9]?[A-Z]))))\s*[0-9][A-Z]{2}$/gi);
@@ -55,7 +38,6 @@ async function findTwoNearestBusStops(myLat, myLon){
     let radius = 25;
 
     const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-
     let nearestBusStops = await fetch(`https://api.tfl.gov.uk/StopPoint/?lat=${myLat}&lon=${myLon}&stopTypes=${stopTypes}&radius=${radius}`)
     .then(response => response.json());
 
@@ -66,28 +48,23 @@ async function findTwoNearestBusStops(myLat, myLon){
     }
 
     return nearestBusStops;
-    //return [nearestBusStops.stopPoints[0].naptanId, nearestBusStops.stopPoints[1].naptanId];
 }
 
+////////////////////////////////////////////////////////////////////////
 
 let myPostCode = getInputFromUser("Enter a postcode", isValidPostCode);
-
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 const postcodeInfo = await fetch(`http://api.postcodes.io/postcodes/${myPostCode}`)
 .then(response => response.json())
 
-let myLat = postcodeInfo.result.latitude
-let myLon = postcodeInfo.result.longitude
-
-// console.log(myLat)
-// console.log(myLon)
+let myLat = postcodeInfo.result.latitude;
+let myLon = postcodeInfo.result.longitude;
 
 let myBusStopId = await findTwoNearestBusStops(myLat, myLon);
 
 for (let i = 0; i < 2; i++){
     
-    console.log(myBusStopId.stopPoints[i].naptanId);
+    //console.log(myBusStopId.stopPoints[i].naptanId);
 
     const arrivals = await fetch(`https://api.tfl.gov.uk/StopPoint/${myBusStopId.stopPoints[i].naptanId}/Arrivals`)
     .then(response => response.json());
@@ -97,7 +74,7 @@ for (let i = 0; i < 2; i++){
         console.log(`Sorry, no buses today!`);
 
     }
-    else{
+    else {
         arrivals.sort(function(a, b){return a.timeToStation - b.timeToStation});
 
         for( let j=0; j<5; j++ ){
@@ -111,7 +88,7 @@ for (let i = 0; i < 2; i++){
         }
     }
     
-    let myInput = getInputFromUser("Do you need directions to this bus stop?", isYorN);
+    let myInput = getInputFromUser("Do you need directions to this bus stop?", isYorN).toUpperCase();
 
     if (myInput=="Y"){
 
