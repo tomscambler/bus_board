@@ -46,66 +46,65 @@ function secondsToMinutesAndSeconds(numberOfSeconds){
 }
 
 async function findTwoNearestBusStops(myLat, myLon){
+
     let stopTypes = "NaptanPublicBusCoachTram";
     let radius = 25;
 
     const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-
-    let arrivals = await fetch(`https://api.tfl.gov.uk/StopPoint/?lat=${myLat}&lon=${myLon}&stopTypes=${stopTypes}&radius=${radius}`)
+    let nearestBusStops = await fetch(`https://api.tfl.gov.uk/StopPoint/?lat=${myLat}&lon=${myLon}&stopTypes=${stopTypes}&radius=${radius}`)
     .then(response => response.json());
 
-    while (arrivals.stopPoints.length<2){
+    while (nearestBusStops.stopPoints.length<2){
         radius+=25;
-        arrivals = await fetch(`https://api.tfl.gov.uk/StopPoint/?lat=${myLat}&lon=${myLon}&stopTypes=${stopTypes}&radius=${radius}`)
+        nearestBusStops = await fetch(`https://api.tfl.gov.uk/StopPoint/?lat=${myLat}&lon=${myLon}&stopTypes=${stopTypes}&radius=${radius}`)
         .then(response => response.json());
     }
 
-    return [arrivals.stopPoints[0].naptanId, arrivals.stopPoints[1].naptanId];
+    return nearestBusStops;
+    //return [nearestBusStops.stopPoints[0].naptanId, nearestBusStops.stopPoints[1].naptanId];
 }
+
 
 let myPostCode = getInputFromUser("Enter a postcode");
 
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 const postcodeInfo = await fetch(`http://api.postcodes.io/postcodes/${myPostCode}`)
-
 .then(response => response.json())
 
 let myLat = postcodeInfo.result.latitude
 let myLon = postcodeInfo.result.longitude
 
-console.log(myLat)
-console.log(myLon)
+// console.log(myLat)
+// console.log(myLon)
 
 let myBusStopId = await findTwoNearestBusStops(myLat, myLon);
 
-console.log(myBusStopId)
-for (let i = 0; i < 2; i++){
-    const arrivals = await fetch(`https://api.tfl.gov.uk/StopPoint/${myBusStopId[i]}/Arrivals`)
+//console.log(myBusStopId)
 
+for (let i = 0; i < 2; i++){
+
+    const arrivals = await fetch(`https://api.tfl.gov.uk/StopPoint/${myBusStopId.stopPoints[i].naptanId}/Arrivals`)
     .then(response => response.json());
 
-    arrivals.sort(function(a, b){return a.timeToStation - b.timeToStation});
-    for(let j=0; j<5; j++ ){
-            
-        let myDestination = arrivals[j].destinationName;
-        let myArrivalTime = arrivals[j].timeToStation;
-        let myRoute = arrivals[j].lineId;
-        let myStop = arrivals[j].stationName;
-    
-        console.log(`Your next bus from ${myStop} is the ${myRoute} to ${myDestination}, arriving in ${secondsToMinutesAndSeconds(myArrivalTime)}`);
+    if (arrivals.length==0){
+
+        console.log(`Sorry, no buses today!`);
+
+    }
+    else{
+        arrivals.sort(function(a, b){return a.timeToStation - b.timeToStation});
+
+        for(let j=0; j<5; j++ ){
+                
+            let myDestination = arrivals[j].destinationName;
+            let myArrivalTime = arrivals[j].timeToStation;
+            let myRoute = arrivals[j].lineId;
+            let myStop = arrivals[j].stationName;
+        
+            console.log(`Your next bus from ${myStop} is the ${myRoute} to ${myDestination}, arriving in ${secondsToMinutesAndSeconds(myArrivalTime)}`);
+        }
     }
 }
-
-// arrivals.sort(function(a, b){return a.timeToStation - b.timeToStation});
-
-// for( let i=0; i<5; i++ ){
-        
-//     let myDestination = arrivals[i].destinationName;
-//     let myArrivalTime = arrivals[i].timeToStation;
-
-//     console.log(`your next bus to ${myDestination} arrives in ${secondsToMinutesAndSeconds(myArrivalTime)}`);
-// }
-
 
