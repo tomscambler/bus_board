@@ -36,12 +36,32 @@ function getInputFromUser(myMessageToUser){
 }
 
 function secondsToMinutesAndSeconds(numberOfSeconds){
-    if (numberOfSeconds%60<10){
-        return `${Math.floor(numberOfSeconds/60)}:0${numberOfSeconds%60}`;
+    if (numberOfSeconds>120){
+        return `${Math.floor(numberOfSeconds/60)} mins`;
+    } else if (numberOfSeconds >= 60){
+        return `${Math.floor(numberOfSeconds/60)} min`;
+    } else {
+        return `under a minute`;
     }
-    else {
-        return `${Math.floor(numberOfSeconds/60)}:${numberOfSeconds%60}`;
+}
+
+async function findTwoNearestBusStops(myLat, myLon){
+    let stopTypes = "NaptanPublicBusCoachTram";
+    let radius = 25;
+
+    const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+
+
+    let arrivals = await fetch(`https://api.tfl.gov.uk/StopPoint/?lat=${myLat}&lon=${myLon}&stopTypes=${stopTypes}&radius=${radius}`)
+    .then(response => response.json());
+
+    while (arrivals.stopPoints.length<2){
+        radius+=25;
+        arrivals = await fetch(`https://api.tfl.gov.uk/StopPoint/?lat=${myLat}&lon=${myLon}&stopTypes=${stopTypes}&radius=${radius}`)
+        .then(response => response.json());
     }
+
+    return [arrivals.stopPoints[0].naptanId, arrivals.stopPoints[1].naptanId];
 }
 
 let myPostCode = getInputFromUser("Enter a postcode");
@@ -52,11 +72,32 @@ const postcodeInfo = await fetch(`http://api.postcodes.io/postcodes/${myPostCode
 
 .then(response => response.json())
 
+let myLat = postcodeInfo.result.latitude
+let myLon = postcodeInfo.result.longitude
 
-console.log(postcodeInfo)
+console.log(myLat)
+console.log(myLon)
 
+let myBusStopId = await findTwoNearestBusStops(myLat, myLon);
 
-//.then(body => body.slice(0,2));
+console.log(myBusStopId)
+for (let i = 0; i < 2; i++){
+    const arrivals = await fetch(`https://api.tfl.gov.uk/StopPoint/${myBusStopId[i]}/Arrivals`)
+
+    .then(response => response.json());
+
+    arrivals.sort(function(a, b){return a.timeToStation - b.timeToStation});
+    for(let j=0; j<5; j++ ){
+            
+        let myDestination = arrivals[j].destinationName;
+        let myArrivalTime = arrivals[j].timeToStation;
+        let myRoute = arrivals[j].lineId;
+        let myStop = arrivals[j].stationName;
+    
+        console.log(`Your next bus from ${myStop} is the ${myRoute} to ${myDestination}, arriving in ${secondsToMinutesAndSeconds(myArrivalTime)}`);
+    }
+}
+
 // arrivals.sort(function(a, b){return a.timeToStation - b.timeToStation});
 
 // for( let i=0; i<5; i++ ){

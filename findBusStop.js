@@ -1,7 +1,7 @@
-//function findTwoNearestBusStops(myLat, myLon){
+async function findTwoNearestBusStops(myLat, myLon){
 
-    let myLat = 51.5;
-    let myLon = 0.12;
+    //let myLat = 51.5;
+    //let myLon = 0.12;
     let stopTypes = "NaptanPublicBusCoachTram";
     let radius = 25;
 
@@ -17,6 +17,6 @@
         .then(response => response.json());
     }
 
-    console.log( [arrivals.stopPoints[0].naptanId, arrivals.stopPoints[1].naptanId] );
-//}
+    return [arrivals.stopPoints[0].naptanId, arrivals.stopPoints[1].naptanId];
+}
 //console.log(findTwoNearestBusStops(51.5, 0.12));
