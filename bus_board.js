@@ -1,17 +1,21 @@
 import readline from "readline-sync";
 
-function getBusStopIdFromUser(myMessageToUser){
+function isValidBusId(myInput){
+    return myInput.match(/^[0-9]{9}[a-z]$/gi);
+}
+
+function getInputFromUser(myMessageToUser){
 
     console.log(myMessageToUser);
     
-    let busId = readline.prompt(myMessageToUser);
-    busId = "490004486k";
+    let myInput = readline.prompt(myMessageToUser);
+    myInput = "490004486k";
 
-    while( !busId.match(/^[0-9]{9}[a-z]$/gi) ){
-        console.log("ERROR: That is not a valid bus stop!")
-        busId = readline.prompt(myMessageToUser);
+    while( !isValidBusId(myInput) ){
+        console.log("ERROR: That is not valid!")
+        myInput = readline.prompt(myMessageToUser);
     }
-    return busId;
+    return myInput;
 }
 
 function secondsToMinutesAndSeconds(numberOfSeconds){
@@ -23,7 +27,7 @@ function secondsToMinutesAndSeconds(numberOfSeconds){
     }
 }
 
-let myBusStopId = getBusStopIdFromUser("enter a bus id");
+let myBusStopId = getInputFromUser("enter a bus id");
 
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
