@@ -77,7 +77,7 @@ for (let i = 0; i < 2; i++){
     else {
         arrivals.sort(function(a, b){return a.timeToStation - b.timeToStation});
 
-        for( let j=0; j<5; j++ ){
+        for( let j=0; j<Math.min(arrivals.length, 5); j++ ){
                 
             let myDestination = arrivals[j].destinationName;
             let myArrivalTime = arrivals[j].timeToStation;
