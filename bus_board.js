@@ -32,7 +32,7 @@ function secondsToMinutesAndSeconds(numberOfSeconds){
     }
 }
 
-async function findTwoNearestBusStops(myLat, myLon){
+async function findNNearestBusStops(numberOfBusStops, myLat, myLon){
 
     let stopTypes = "NaptanPublicBusCoachTram";
     let radius = 25;
@@ -41,7 +41,7 @@ async function findTwoNearestBusStops(myLat, myLon){
     let nearestBusStops = await fetch(`https://api.tfl.gov.uk/StopPoint/?lat=${myLat}&lon=${myLon}&stopTypes=${stopTypes}&radius=${radius}`)
     .then(response => response.json());
 
-    while (nearestBusStops.stopPoints.length<2){
+    while (nearestBusStops.stopPoints.length<numberOfBusStops){
         radius+=25;
         nearestBusStops = await fetch(`https://api.tfl.gov.uk/StopPoint/?lat=${myLat}&lon=${myLon}&stopTypes=${stopTypes}&radius=${radius}`)
         .then(response => response.json());
@@ -60,7 +60,7 @@ const postcodeInfo = await fetch(`http://api.postcodes.io/postcodes/${myPostCode
 let myLat = postcodeInfo.result.latitude;
 let myLon = postcodeInfo.result.longitude;
 
-let myBusStopId = await findTwoNearestBusStops(myLat, myLon);
+let myBusStopId = await findNNearestBusStops(2, myLat, myLon);
 
 for (let i = 0; i < 2; i++){
     
