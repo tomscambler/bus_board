@@ -109,7 +109,8 @@ for (let i = 0; i < 2; i++){
          console.log(`Sorry, no buses today!`);
     }
     
-    let myInput = await getInputFromUser("Do you need directions to this bus stop?", isYorN).toUpperCase();
+    let myInput = await getInputFromUser("Do you need directions to this bus stop?", isYorN);
+    myInput = myInput.toUpperCase();
 
     if (myInput=="Y"){
 
