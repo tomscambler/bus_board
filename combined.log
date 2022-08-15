@@ -1,0 +1,4 @@
+{"level":"error","message":"this is an error message"}
+{"level":"error","message":"this is a new message"}
+{"level":"warn","message":"this is a new message"}
+{"level":"info","message":"this is a new message"}

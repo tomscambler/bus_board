@@ -95,11 +95,7 @@ for (let i = 0; i < 2; i++){
     const arrivals = await fetch(`https://api.tfl.gov.uk/StopPoint/${myBusStopId.stopPoints[i].naptanId}/Arrivals`)
     .then(response => response.json());
 
-    //console.log(arrivals);
-
     try {
-
-        
         arrivals.sort(function(a, b){return a.timeToStation - b.timeToStation});
 
         for( let j=0; j<Math.min(arrivals.length, 5); j++ ){
@@ -115,6 +111,7 @@ for (let i = 0; i < 2; i++){
 
     catch (error) {
          console.log(`Sorry, no buses today!`);
+         logger.error(`${myPostCode} produced an error`);
     }
     
     let myInput = await getInputFromUser("Do you need directions to this bus stop?", isYorN);
