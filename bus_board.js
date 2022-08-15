@@ -18,7 +18,7 @@ async function isValidPostCode(myInput){
 }
 
 async function isYorN(myInput){
-    return myInput.match(/[YN]{1}/gi);
+    return myInput.match(/^[YN]$/gi);
 }
 
 async function getInputFromUser(myMessageToUser, myValidationFunction){
@@ -36,10 +36,11 @@ async function getInputFromUser(myMessageToUser, myValidationFunction){
 }
 
 function secondsToMinutesAndSeconds(numberOfSeconds){
-    if (numberOfSeconds>120){
-        return `${Math.floor(numberOfSeconds/60)} mins`;
-    } else if (numberOfSeconds >= 60){
-        return `${Math.floor(numberOfSeconds/60)} min`;
+    let numberOfMinutes = Math.floor(numberOfSeconds/60);
+    if (numberOfMinutes>1){
+        return `${numberOfMinutes} mins`;
+    } else if (numberOfMinutes == 1){
+        return `${numberOfMinutes} min`;
     } else {
         return `under a minute`;
     }
@@ -53,21 +54,21 @@ async function findNNearestBusStops(numberOfBusStops, myLat, myLon){
 
       do {
         radius+=25;
+
         try {
-            const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-            nearestBusStops = await fetch(`https://api.tfl.gov.uk/StopPoint/?lat=${myLat}&lon=${myLon}&stopTypes=${stopTypes}&radius=${radius}&app_key=9a27a636e630462685f5b20949631f4f`)
-            .then(response => response.json());
-            if (nearestBusStops === undefined){
-                throw "There are no bus stops nearby"
+                nearestBusStops = await fetch(`https://api.tfl.gov.uk/StopPoint/?lat=${myLat}&lon=${myLon}&stopTypes=${stopTypes}&radius=${radius}&app_key=9a27a636e630462685f5b20949631f4f`)
+                .then(response => response.json());
+                if (nearestBusStops === undefined){
+                    throw "There are no bus stops nearby"
+                }
+                if (radius > 1000){
+                    throw "There are no bus stops within 1km of your location"
+                }
             }
-            if (radius > 1025){
-                throw "There are no bus stops within 1km of your location"
+            catch (error){
+                console.log(error);
+                return {stopPoints: []};
             }
-        }
-        catch (error){
-            console.log(error);
-            return []
-        }
     } while (nearestBusStops.stopPoints.length<numberOfBusStops)
 
     return nearestBusStops;
@@ -78,25 +79,19 @@ async function findNNearestBusStops(numberOfBusStops, myLat, myLon){
 let myPostCode = await getInputFromUser("Enter a postcode", isValidPostCode);
 
 const postcodeInfo = await fetch(`http://api.postcodes.io/postcodes/${myPostCode}`)
-.then(response => response.json())
+.then(response => response.json());
 
 let myLat = postcodeInfo.result.latitude;
 let myLon = postcodeInfo.result.longitude;
 
 let myBusStopId = await findNNearestBusStops(2, myLat, myLon);
 
-for (let i = 0; i < myBusStopId.length; i++){
+for (let i = 0; i < myBusStopId.stopPoints.length; i++){
     
-    //console.log(myBusStopId.stopPoints[i].naptanId);
-
     const arrivals = await fetch(`https://api.tfl.gov.uk/StopPoint/${myBusStopId.stopPoints[i].naptanId}/Arrivals`)
     .then(response => response.json());
 
-    //console.log(arrivals);
-    arrivals.sort(function(a, b){return a.timeToStation - b.timeToStation});
-
     try {
-        // console.log("Hi")
         arrivals.sort(function(a, b){return a.timeToStation - b.timeToStation});
 
         if (arrivals.length === 0){
@@ -123,15 +118,9 @@ for (let i = 0; i < myBusStopId.length; i++){
             for (let k=0; k<directions.journeys[0].legs[0].instruction.steps.length; k++){
                 console.log(`${directions.journeys[0].legs[0].instruction.steps[k].descriptionHeading}${directions.journeys[0].legs[0].instruction.steps[k].description}`);
             }
-        }
-
-
-       
+        }  
     }
-
     catch (error) {
          console.log(error);
     }
-    
-
 }
