@@ -1,22 +1,27 @@
 import readline from "readline-sync";
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-function isValidPostCode(myInput){
-    return myInput.match(/^(([A-Z][0-9]{1,2})|(([A-Z][A-HJ-Y][0-9]{1,2})|(([A-Z][0-9][A-Z])|([A-Z][A-HJ-Y][0-9]?[A-Z]))))\s*[0-9][A-Z]{2}$/gi);
+async function isValidPostCode(myInput){
+    
+    let validatePostcode = await fetch(`https://api.postcodes.io/postcodes/${myInput}/validate`)
+    .then(response => response.json());
+
+    return validatePostcode.result;
 }
 
-function isYorN(myInput){
+async function isYorN(myInput){
     return myInput.match(/[YN]{1}/gi);
 }
 
-function getInputFromUser(myMessageToUser, myValidationFunction){
+async function getInputFromUser(myMessageToUser, myValidationFunction){
 
     console.log(myMessageToUser);
     
     let myInput = readline.prompt(myMessageToUser);
 
-    while( !myValidationFunction(myInput) ){
+    while( ! await myValidationFunction(myInput) ){
         console.log("ERROR: That is not valid!")
+        console.log(myMessageToUser);
         myInput = readline.prompt(myMessageToUser);
     }
     return myInput;
@@ -36,15 +41,28 @@ async function findNNearestBusStops(numberOfBusStops, myLat, myLon){
 
     let stopTypes = "NaptanPublicBusCoachTram";
     let radius = 25;
+    let nearestBusStops;
 
-    const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-    let nearestBusStops = await fetch(`https://api.tfl.gov.uk/StopPoint/?lat=${myLat}&lon=${myLon}&stopTypes=${stopTypes}&radius=${radius}`)
-    .then(response => response.json());
+    try {
+        const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+        nearestBusStops = await fetch(`https://api.tfl.gov.uk/StopPoint/?lat=${myLat}&lon=${myLon}&stopTypes=${stopTypes}&radius=${radius}`)
+        .then(response => response.json());
+    }
+    catch (error){
+        console.log("Sorry, there was an error: ", error);
+    }
 
     while (nearestBusStops.stopPoints.length<numberOfBusStops){
         radius+=25;
-        nearestBusStops = await fetch(`https://api.tfl.gov.uk/StopPoint/?lat=${myLat}&lon=${myLon}&stopTypes=${stopTypes}&radius=${radius}`)
-        .then(response => response.json());
+
+        try {
+            const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+            nearestBusStops = await fetch(`https://api.tfl.gov.uk/StopPoint/?lat=${myLat}&lon=${myLon}&stopTypes=${stopTypes}&radius=${radius}`)
+            .then(response => response.json());
+        }
+        catch (error){
+            console.log("Sorry, there was an error: ", error);
+        }
     }
 
     return nearestBusStops;
@@ -52,7 +70,7 @@ async function findNNearestBusStops(numberOfBusStops, myLat, myLon){
 
 ////////////////////////////////////////////////////////////////////////
 
-let myPostCode = getInputFromUser("Enter a postcode", isValidPostCode);
+let myPostCode = await getInputFromUser("Enter a postcode", isValidPostCode);
 
 const postcodeInfo = await fetch(`http://api.postcodes.io/postcodes/${myPostCode}`)
 .then(response => response.json())
@@ -69,12 +87,11 @@ for (let i = 0; i < 2; i++){
     const arrivals = await fetch(`https://api.tfl.gov.uk/StopPoint/${myBusStopId.stopPoints[i].naptanId}/Arrivals`)
     .then(response => response.json());
 
-    if (arrivals.length==0){
+    //console.log(arrivals);
 
-        console.log(`Sorry, no buses today!`);
+    try {
 
-    }
-    else {
+        
         arrivals.sort(function(a, b){return a.timeToStation - b.timeToStation});
 
         for( let j=0; j<Math.min(arrivals.length, 5); j++ ){
@@ -87,8 +104,12 @@ for (let i = 0; i < 2; i++){
             console.log(`Your next bus from ${myStop} is the ${myRoute} to ${myDestination}, arriving in ${secondsToMinutesAndSeconds(myArrivalTime)}`);
         }
     }
+
+     catch (error) {
+         console.log(`Sorry, no buses today!`);
+    }
     
-    let myInput = getInputFromUser("Do you need directions to this bus stop?", isYorN).toUpperCase();
+    let myInput = await getInputFromUser("Do you need directions to this bus stop?", isYorN).toUpperCase();
 
     if (myInput=="Y"){
 
