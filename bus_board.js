@@ -48,30 +48,27 @@ function secondsToMinutesAndSeconds(numberOfSeconds){
 async function findNNearestBusStops(numberOfBusStops, myLat, myLon){
 
     let stopTypes = "NaptanPublicBusCoachTram";
-    let radius = 25;
+    let radius = 0;
     let nearestBusStops;
 
-    try {
-        const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-        nearestBusStops = await fetch(`https://api.tfl.gov.uk/StopPoint/?lat=${myLat}&lon=${myLon}&stopTypes=${stopTypes}&radius=${radius}`)
-        .then(response => response.json());
-    }
-    catch (error){
-        console.log("Sorry, there was an error: ", error);
-    }
-
-    while (nearestBusStops.stopPoints.length<numberOfBusStops){
+      do {
         radius+=25;
-
         try {
             const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-            nearestBusStops = await fetch(`https://api.tfl.gov.uk/StopPoint/?lat=${myLat}&lon=${myLon}&stopTypes=${stopTypes}&radius=${radius}`)
+            nearestBusStops = await fetch(`https://api.tfl.gov.uk/StopPoint/?lat=${myLat}&lon=${myLon}&stopTypes=${stopTypes}&radius=${radius}&app_key=9a27a636e630462685f5b20949631f4f`)
             .then(response => response.json());
+            if (nearestBusStops === undefined){
+                throw "There are no bus stops nearby"
+            }
+            if (radius > 1025){
+                throw "There are no bus stops within 1km of your location"
+            }
         }
         catch (error){
-            console.log("Sorry, there was an error: ", error);
+            console.log(error);
+            return []
         }
-    }
+    } while (nearestBusStops.stopPoints.length<numberOfBusStops)
 
     return nearestBusStops;
 }
@@ -88,15 +85,23 @@ let myLon = postcodeInfo.result.longitude;
 
 let myBusStopId = await findNNearestBusStops(2, myLat, myLon);
 
-for (let i = 0; i < 2; i++){
+for (let i = 0; i < myBusStopId.length; i++){
     
     //console.log(myBusStopId.stopPoints[i].naptanId);
 
     const arrivals = await fetch(`https://api.tfl.gov.uk/StopPoint/${myBusStopId.stopPoints[i].naptanId}/Arrivals`)
     .then(response => response.json());
 
+    //console.log(arrivals);
+    arrivals.sort(function(a, b){return a.timeToStation - b.timeToStation});
+
     try {
+        // console.log("Hi")
         arrivals.sort(function(a, b){return a.timeToStation - b.timeToStation});
+
+        if (arrivals.length === 0){
+            throw "Live updates are not available for this stop"
+        }
 
         for( let j=0; j<Math.min(arrivals.length, 5); j++ ){
                 
@@ -107,23 +112,26 @@ for (let i = 0; i < 2; i++){
         
             console.log(`Your next bus from ${myStop} is the ${myRoute} to ${myDestination}, arriving in ${secondsToMinutesAndSeconds(myArrivalTime)}`);
         }
+        let myInput = await getInputFromUser("Do you need directions to this bus stop?", isYorN);
+        myInput = myInput.toUpperCase();
+    
+        if (myInput=="Y"){
+    
+            const directions = await fetch(`https://api.tfl.gov.uk/Journey/JourneyResults/${myPostCode}/to/${myBusStopId.stopPoints[i].naptanId}`)
+            .then(response => response.json());
+    
+            for (let k=0; k<directions.journeys[0].legs[0].instruction.steps.length; k++){
+                console.log(`${directions.journeys[0].legs[0].instruction.steps[k].descriptionHeading}${directions.journeys[0].legs[0].instruction.steps[k].description}`);
+            }
+        }
+
+
+       
     }
 
     catch (error) {
-         console.log(`Sorry, no buses today!`);
-         logger.error(`${myPostCode} produced an error`);
+         console.log(error);
     }
     
-    let myInput = await getInputFromUser("Do you need directions to this bus stop?", isYorN);
-    myInput = myInput.toUpperCase();
 
-    if (myInput=="Y"){
-
-        const directions = await fetch(`https://api.tfl.gov.uk/Journey/JourneyResults/${myPostCode}/to/${myBusStopId.stopPoints[i].naptanId}`)
-        .then(response => response.json());
-
-        for (let k=0; k<directions.journeys[0].legs[0].instruction.steps.length; k++){
-            console.log(`${directions.journeys[0].legs[0].instruction.steps[k].descriptionHeading}${directions.journeys[0].legs[0].instruction.steps[k].description}`);
-        }
-    }
 }
