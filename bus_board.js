@@ -1,4 +1,12 @@
 import readline from "readline-sync";
+import winston from "winston";
+const logger = winston.createLogger({
+    transports: [
+        new winston.transports.Console(),
+        new winston.transports.File({filename: 'combined.log' })
+    ]
+});
+
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 async function isValidPostCode(myInput){
@@ -105,7 +113,7 @@ for (let i = 0; i < 2; i++){
         }
     }
 
-     catch (error) {
+    catch (error) {
          console.log(`Sorry, no buses today!`);
     }
     
